@@ -1,0 +1,34 @@
+@import url("/home/gerard/.config/waybar/colors.css");
+
+/* General Waybar styles */
+* {
+    font-family: "JetBrainsMono Nerd Font";
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: transparent;
+    color: inherit;
+    transition: background-color 0.5s;
+}
+
+/* Module containers */
+.modules-left,
+.modules-center,
+.modules-right {
+    margin: 4px;
+    padding: 0 8px;
+    border-radius: 12px;
+}
+
+/* Workspace buttons */
+#workspaces button {
+    background-color: transparent;
+    border-radius: 10px;
+    padding: 0 5px;
+}
+
+#workspaces button:hover {
+    opacity: 0.8;
+}
