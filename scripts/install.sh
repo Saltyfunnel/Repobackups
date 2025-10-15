@@ -1,5 +1,5 @@
 #!/bin/bash
-# Minimal Hyprland Installer with user configs (fixed paths)
+# Minimal Hyprland Installer with user configs (Bash only)
 set -euo pipefail
 
 # ----------------------------
@@ -69,12 +69,15 @@ fi
 # ----------------------------
 print_header "Installing core packages"
 PACMAN_PACKAGES=(
+    # Core system + Hyprland essentials
     hyprland waybar swww dunst grim slurp kitty nano wget jq
     sddm polkit polkit-kde-agent code curl bluez bluez-utils blueman
     thunar gvfs gvfs-mtp gvfs-gphoto2 gvfs-smb udisks2 chafa nwg-look
     thunar-archive-plugin thunar-volman tumbler ffmpegthumbnailer file-roller
-    firefox yazi fastfetch mpv gnome-disk-utility pavucontrol
-    qt5-wayland qt6-wayland gtk3 gtk4 starship
+    firefox yazi fastfetch starship mpv gnome-disk-utility pavucontrol
+
+    # GUI / Wayland / Fonts
+    qt5-wayland qt6-wayland gtk3 gtk4 libgit2
     ttf-jetbrains-mono-nerd ttf-iosevka-nerd ttf-fira-code ttf-fira-mono
 )
 run_command "pacman -S --noconfirm --needed ${PACMAN_PACKAGES[*]}" "Install core packages"
@@ -105,7 +108,6 @@ print_header "Installing AUR packages"
 AUR_PACKAGES=(
     python-pywal16
     tofi
-    # Add additional AUR packages here
 )
 for pkg in "${AUR_PACKAGES[@]}"; do
     if yay -Qs "^$pkg$" &>/dev/null; then
@@ -114,6 +116,33 @@ for pkg in "${AUR_PACKAGES[@]}"; do
         run_command "sudo -u $USER_NAME yay -S --noconfirm $pkg" "Install $pkg from AUR"
     fi
 done
+
+# ----------------------------
+# Shell Setup (Bash only)
+# ----------------------------
+print_header "Shell Setup"
+run_command "chsh -s $(command -v bash) $USER_NAME" "Set Bash as default shell"
+
+BASHRC_SRC="$REPO_ROOT/configs/.bashrc"
+BASHRC_DEST="$USER_HOME/.bashrc"
+
+if [[ -f "$BASHRC_SRC" ]]; then
+    sudo -u "$USER_NAME" cp "$BASHRC_SRC" "$BASHRC_DEST"
+    print_success ".bashrc copied from repo"
+else
+    print_warning "No .bashrc found in repo, creating a minimal one"
+    cat <<'EOF' | sudo -u "$USER_NAME" tee "$BASHRC_DEST" >/dev/null
+# Restore Pywal colors and clear terminal
+wal -r && clear
+
+# Initialize Starship prompt
+eval "$(starship init bash)"
+
+# Run fastfetch after login
+fastfetch
+EOF
+    print_success "Minimal .bashrc created with wal + fastfetch + starship"
+fi
 
 # ----------------------------
 # Copy Hyprland configs
@@ -178,10 +207,18 @@ sudo -u "$USER_NAME" mkdir -p "$CONFIG_DIR/fastfetch"
 [[ -f "$FASTFETCH_SRC" ]] && sudo -u "$USER_NAME" cp "$FASTFETCH_SRC" "$CONFIG_DIR/fastfetch/config.jsonc" && print_success "Fastfetch config copied"
 
 # ----------------------------
-# Copy .bashrc
+# Copy Starship config
 # ----------------------------
-print_header "Copying .bashrc"
-[[ -f "$REPO_ROOT/configs/.bashrc" ]] && sudo -u "$USER_NAME" cp "$REPO_ROOT/configs/.bashrc" "$USER_HOME/.bashrc" && print_success ".bashrc copied"
+print_header "Copying Starship config"
+STARSHIP_SRC="$REPO_ROOT/configs/starship/starship.toml"
+STARSHIP_DEST="$CONFIG_DIR/starship.toml"
+
+if [[ -f "$STARSHIP_SRC" ]]; then
+    sudo -u "$USER_NAME" cp "$STARSHIP_SRC" "$STARSHIP_DEST"
+    print_success "Starship config copied to $STARSHIP_DEST"
+else
+    print_warning "Starship config not found at $STARSHIP_SRC"
+fi
 
 # ----------------------------
 # Copy Wallpapers
