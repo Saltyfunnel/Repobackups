@@ -70,15 +70,15 @@ fi
 print_header "Installing core packages"
 PACMAN_PACKAGES=(
     # Core system + Hyprland essentials
-    hyprland waybar swww dunst grim slurp kitty nano wget jq
+    hyprland waybar swww dunst grim slurp kitty nano wget jq oculante
     sddm polkit polkit-kde-agent code curl bluez bluez-utils blueman
-    thunar gvfs gvfs-mtp gvfs-gphoto2 gvfs-smb udisks2 chafa nwg-look
+    thunar gvfs gvfs-mtp gvfs-gphoto2 gvfs-smb udisks2 chafa nwg-look papirus-icon-theme
     thunar-archive-plugin thunar-volman tumbler ffmpegthumbnailer file-roller
     firefox yazi fastfetch starship mpv gnome-disk-utility pavucontrol
 
     # GUI / Wayland / Fonts
     qt5-wayland qt6-wayland gtk3 gtk4 libgit2
-    ttf-jetbrains-mono-nerd ttf-iosevka-nerd ttf-fira-code ttf-fira-mono
+    ttf-jetbrains-mono-nerd ttf-iosevka-nerd ttf-fira-code ttf-fira-mono ttf-cascadia-code-nerd
 )
 run_command "pacman -S --noconfirm --needed ${PACMAN_PACKAGES[*]}" "Install core packages"
 
@@ -161,6 +161,22 @@ if [[ -d "$WAYBAR_CONFIG_SRC" ]]; then
     sudo -u "$USER_NAME" cp -rf "$WAYBAR_CONFIG_SRC/." "$CONFIG_DIR/waybar/"
     print_success "Waybar config copied"
 fi
+
+# ----------------------------
+# Copy Kitty config
+# ----------------------------
+print_header "Copying Kitty config"
+KITTY_CONFIG_SRC="$REPO_ROOT/configs/kitty/kitty.conf"
+KITTY_CONFIG_DEST="$CONFIG_DIR/kitty/kitty.conf"
+
+sudo -u "$USER_NAME" mkdir -p "$CONFIG_DIR/kitty"
+if [[ -f "$KITTY_CONFIG_SRC" ]]; then
+    sudo -u "$USER_NAME" cp "$KITTY_CONFIG_SRC" "$KITTY_CONFIG_DEST"
+    print_success "Kitty config copied to $KITTY_CONFIG_DEST"
+else
+    print_warning "Kitty config not found at $KITTY_CONFIG_SRC"
+fi
+
 
 # ----------------------------
 # Copy Tofi config
