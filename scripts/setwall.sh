@@ -37,6 +37,7 @@ swww img "$WALLPAPER" --transition-type any --transition-step 90 --transition-fp
 # Generate Pywal colors
 # ----------------------------
 wal -n -q -i "$WALLPAPER"
+sleep 0.5  # allow wal to write cache
 
 # ----------------------------
 # Extract colors from Pywal
@@ -94,28 +95,29 @@ window#waybar {
     padding: 0;
 }
 
-/* Workspace Dots */
-
+/* Standard modules */
 #window,
 #clock,
 #custom-spotify,
+#custom-firefox,
+#custom-steam,
 #cpu,
 #memory,
 #network,
 #pulseaudio,
 #pulseaudio#microphone,
 #custom-power,
-#tray {
+#tray,
+#workspaces {
     background-color: ${BG};
     border-radius: 11.5px;
     margin: 2px;
     padding: 5px 8px;
 }
 
-/* Text colors for modules */
+/* Text colors for standard modules */
 #window { color: ${COLOR5}; }
 #clock { color: ${COLOR3}; }
-#custom-spotify { color: ${COLOR5}; }
 #cpu { color: ${COLOR2}; }
 #memory { color: ${COLOR4}; }
 #network { color: ${COLOR6}; }
@@ -123,6 +125,54 @@ window#waybar {
 #pulseaudio#microphone { color: ${COLOR9}; }
 #custom-power { color: ${FG}; }
 #tray { color: ${FG}; }
+
+/* Workspace buttons: transparent background, icons only */
+#workspaces button {
+    background-color: transparent;
+    border: none;
+    margin: 0 2px;
+    padding: 0;
+    color: @color5;  /* matches your theme */
+}
+
+#workspaces button:hover {
+    background-color: transparent;
+}
+
+/* App icon modules: Spotify, Firefox, Steam */
+#custom-spotify {
+    background-color: ${BG};       /* same as other modules */
+    color: ${COLOR2};               /* Spotify color */
+    border-radius: 11.5px;
+    margin: 2px;
+    padding: 5px 8px;
+    font-size: 13px;
+}
+
+#custom-firefox {
+    background-color: ${BG};
+    color: ${COLOR3};               /* Firefox color */
+    border-radius: 11.5px;
+    margin: 2px;
+    padding: 5px 8px;
+    font-size: 13px;
+}
+
+#custom-steam {
+    background-color: ${BG};
+    color: ${COLOR4};               /* Steam color */
+    border-radius: 11.5px;
+    margin: 2px;
+    padding: 5px 8px;
+    font-size: 13px;
+}
+
+# Remove hover highlight for all three
+#custom-spotify:hover,
+#custom-firefox:hover,
+#custom-steam:hover {
+    background-color: ${BG};
+}
 EOF
 
 echo "Waybar colors updated at $WAYBAR_CSS"
@@ -183,8 +233,6 @@ if pgrep -x "tofi-drun" >/dev/null; then
     echo "Reloading Tofi with new theme..."
     pkill -x tofi-drun
     tofi-drun -c ~/.cache/wal/tofi --drun-launch=true &
-else
-    echo "Tofi is not currently running. No reload needed."
 fi
 
-echo "Done! Wallpaper, Waybar, Yazi, and Tofi theme updated."
+echo "✅ Done! Wallpaper, Waybar, Yazi, and Tofi theme updated."

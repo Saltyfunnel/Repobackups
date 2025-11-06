@@ -6,7 +6,8 @@
   "passthrough": false,
 
   "modules-left": [
-  "hyprland/window"
+    "hyprland/workspaces",
+    "hyprland/window"
   ],
 
   "modules-center": [
@@ -15,6 +16,8 @@
 
   "modules-right": [
     "custom/spotify",
+    "custom/firefox",
+    "custom/steam",
     "memory",
     "cpu",
     "battery",
@@ -23,14 +26,34 @@
     "pulseaudio#microphone",
     "network",
     "custom/power"
-    ],
+  ],
 
   "custom/spotify": {
-    "exec": "STATUS=$(playerctl status --player=spotify 2>/dev/null); if [ \"$STATUS\" = \"Playing\" ]; then ICON=''; elif [ \"$STATUS\" = \"Paused\" ]; then ICON=''; else echo ''; exit 0; fi; INFO=$(playerctl metadata --player=spotify --format '{{ artist }} - {{ title }}'); echo \"$ICON $INFO\"",
-    "interval": 2,
-    "format": "{}",
-    "on-click": "playerctl play-pause --player=spotify"
-  },
+  "exec": "pgrep -x spotify >/dev/null && echo '' || echo ''",
+  "interval": 5,
+  "format": "{}",
+  "tooltip": false,
+  "max-length": 1,
+  "class": "spotify"
+},
+
+"custom/firefox": {
+  "exec": "pgrep -x firefox >/dev/null && echo '' || echo ''",
+  "interval": 5,
+  "format": "{}",
+  "tooltip": false,
+  "max-length": 1,
+  "class": "firefox"
+},
+
+"custom/steam": {
+  "exec": "pgrep -x steam >/dev/null && echo '' || echo ''",
+  "interval": 5,
+  "format": "{}",
+  "tooltip": false,
+  "max-length": 1,
+  "class": "steam"
+},
 
   "memory": {
     "states": {
@@ -39,11 +62,11 @@
       "m": 30
     },
     "interval": 10,
-    "format": "󰾆  {used}GB",
-    "format-m": "󰾅  {used}GB",
-    "format-h": "󰓅  {used}GB",
-    "format-c": "  {used}GB",
-    "format-alt": "󰾆  {percentage}%",
+    "format": "󰾆 {used}GB",
+    "format-m": "󰾅 {used}GB",
+    "format-h": "󰓅 {used}GB",
+    "format-c": " {used}GB",
+    "format-alt": "󰾆 {percentage}%",
     "max-length": 10,
     "tooltip": true,
     "tooltip-format": "󰾆 {percentage}%\n {used:0.1f}GB/{total:0.1f}GB"
@@ -51,9 +74,9 @@
 
   "cpu": {
     "interval": 10,
-    "format": "󰍛  {usage}%",
+    "format": "󰍛 {usage}%",
     "format-alt": "{icon0}{icon1}{icon2}{icon3}",
-    "format-icons": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
+    "format-icons": [" ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
   },
 
   "network": {
@@ -93,24 +116,16 @@
     "min-length": 6
   },
 
-  "pulseaudio": {
-    "format": "{icon}  {volume}%",
+ "pulseaudio": {
+    "format": "{icon} {volume}%",
     "tooltip": false,
     "format-muted": "  Muted",
+    "format-icons": ["", "", ""],   // speaker icons for different volume states
     "on-click": "pamixer -t",
     "on-scroll-up": "pamixer -i 1",
     "on-scroll-down": "pamixer -d 1",
-    "scroll-step": 5,
-    "format-icons": {
-      "headphone": "",
-      "hands-free": "",
-      "headset": "",
-      "phone": "",
-      "portable": "",
-      "car": "",
-      "default": ["", "", "", ""]
-    }
-  },
+    "scroll-step": 5
+},
 
   "pulseaudio#microphone": {
     "format": "{format_source}",
@@ -125,19 +140,6 @@
   "clock": {
     "format": "{:%I:%M %p}",
     "tooltip-format": "<big>{:%Y %B}</big>\n<tt>{calendar}</tt>",
-    "calendar": {
-      "mode": "month",
-      "mode-icons": {
-        "month": ""
-      },
-      "weeks-pos": "right",
-      "on-scroll": 1,
-      "format": {
-        "months": "<span color='#ffead3'><b>{}</b></span>",
-        "weekdays": "<span color='#ffcc66'><b>{}</b></span>",
-        "today": "<span color='#ff6699'><b>{}</b></span>"
-      }
-    },
     "interval": 1
   },
 
@@ -156,8 +158,27 @@
     "max-length": 40
   },
 
- "tray": {
-   "icon-size": 14,
-   "spacing": 10
+  "tray": {
+    "icon-size": 14,
+    "spacing": 10
+  },
+
+ "hyprland/workspaces": {
+    "format": "{icon}",
+    "format-icons": {
+        "default": "",
+        "active": "",
+        "occupied": "",
+        "urgent": ""
+    },
+    "persistent-workspaces": {
+        "1": [],
+        "2": [],
+        "3": []
+    },
+    "sort-by-number": true,
+    "on-click": "activate"
 }
+
+  }
 }
