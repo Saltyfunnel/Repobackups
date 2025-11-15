@@ -71,7 +71,7 @@ print_header "Installing core packages"
 PACMAN_PACKAGES=(
     # Core system + Hyprland essentials
     hyprland waybar swww dunst grim slurp kitty nano wget jq oculante
-    sddm polkit polkit-kde-agent code curl bluez bluez-utils blueman
+    sddm polkit polkit-kde-agent code curl bluez bluez-utils blueman python-pyqt6 python-pillow
     thunar gvfs gvfs-mtp gvfs-gphoto2 gvfs-smb udisks2 chafa nwg-look papirus-icon-theme
     thunar-archive-plugin thunar-volman tumbler ffmpegthumbnailer file-roller
     firefox yazi fastfetch starship mpv gnome-disk-utility pavucontrol
@@ -211,7 +211,16 @@ print_header "Copying user scripts"
 if [[ -d "$SCRIPTS_SRC" ]]; then
     sudo -u "$USER_NAME" mkdir -p "$CONFIG_DIR/scripts"
     sudo -u "$USER_NAME" cp -rf "$SCRIPTS_SRC/." "$CONFIG_DIR/scripts/"
+
+    # Make all .sh scripts executable
     sudo -u "$USER_NAME" chmod +x "$CONFIG_DIR/scripts/"*.sh
+
+    # Make wallpaper-picker.py executable
+    if [[ -f "$CONFIG_DIR/scripts/wallpaper-picker.py" ]]; then
+        sudo -u "$USER_NAME" chmod +x "$CONFIG_DIR/scripts/wallpaper-picker.py"
+        print_success "wallpaper-picker.py made executable"
+    fi
+
     print_success "User scripts copied"
 fi
 
