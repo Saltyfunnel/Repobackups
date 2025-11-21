@@ -1,5 +1,5 @@
 #!/bin/bash
-# setwall.sh - Sets wallpaper + Pywal + updates Waybar, Yazi, Tofi
+# setwall.sh - Sets wallpaper + Pywal + updates Waybar, Yazi, Mako + screenshot notifications
 set -euo pipefail
 
 # ----------------------------
@@ -7,10 +7,15 @@ set -euo pipefail
 # ----------------------------
 WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
 WAYBAR_CSS="$HOME/.config/waybar/style.css"
+WAYBAR_CONFIG="$HOME/.config/waybar/config"
 PYWAL_CACHE="$HOME/.cache/wal/colors.css"
 YAZI_THEME="$HOME/.config/yazi/theme.toml"
-TOFI_TEMPLATE="$HOME/.config/tofi/tofi.template"
-TOFI_OUTPUT="$HOME/.cache/wal/tofi"
+MAKO_CONFIG="$HOME/.config/mako/config"
+SCREENSHOT_DIR="$HOME/Pictures/Screenshots"
+SCREENSHOT_SCRIPT="$HOME/.local/bin/screenshot_notify.sh"
+
+mkdir -p "$SCREENSHOT_DIR"
+mkdir -p "$(dirname "$SCREENSHOT_SCRIPT")"
 
 # ----------------------------
 # Start swww-daemon if needed
@@ -56,7 +61,9 @@ done
 BG=${COLORS[0]}
 FG=${COLORS[7]}
 
-# Standard modules
+# ----------------------------
+# Update Waybar CSS
+# ----------------------------
 cat > "$WAYBAR_CSS" <<EOF
 /* Waybar CSS - Pywal colors applied */
 @define-color color0 ${COLORS[0]};
@@ -77,7 +84,7 @@ cat > "$WAYBAR_CSS" <<EOF
 @define-color color15 ${COLORS[15]};
 
 * {
-    font-family: "CaskaydiaCove Nerd Font";
+    font-family: "FiraCode Nerd Font";
     font-size: 13px;
     min-height: 0;
 }
@@ -105,7 +112,10 @@ window#waybar {
 #custom-spotify,
 #custom-firefox,
 #custom-steam,
+#custom-screenshot,
 #cpu,
+#battery,
+#backlight,
 #memory,
 #network,
 #pulseaudio,
@@ -135,8 +145,9 @@ window#waybar {
 #custom-spotify { color: @color2; }
 #custom-firefox { color: @color3; }
 #custom-steam { color: @color4; }
+#custom-screenshot { color: @color12; }
 
-/* Hover glow — safe syntax */
+/* Hover glow */
 #custom-spotify:hover {
     box-shadow: 0 0 8px @color2;
     background-color: rgba(255, 255, 255, 0.05);
@@ -169,10 +180,55 @@ window#waybar {
 }
 EOF
 
-
-
 # Reload Waybar
 pkill -USR2 waybar || waybar &
+
+# ----------------------------
+# Generate Pywal-themed Mako config
+# ----------------------------
+mkdir -p "$(dirname "$MAKO_CONFIG")"
+
+BG_MAKO=${COLORS[0]:-"#1c1c1c"}
+FG_MAKO=${COLORS[7]:-"#dcdccc"}
+BORDER_MAKO=${COLORS[2]:-"#000000"}
+CRIT_BG=${COLORS[9]:-"#ff5555"}
+CRIT_FG=${COLORS[0]:-"#1c1c1c"}
+
+cat > "$MAKO_CONFIG" <<EOF
+# Mako Configuration - Pywal Colors
+anchor=top-right
+width=350
+height=90
+margin=10
+padding=8
+border-size=2
+border-radius=10
+
+font=FiraCode Nerd Font 12
+text-color=${FG_MAKO}
+background-color=${BG_MAKO}
+border-color=${BORDER_MAKO}
+default-timeout=5000
+
+[urgency=low]
+background-color=${BG_MAKO}
+text-color=${FG_MAKO}
+default-timeout=3000
+
+[urgency=normal]
+background-color=${BG_MAKO}
+text-color=${FG_MAKO}
+default-timeout=5000
+
+[urgency=critical]
+background-color=${CRIT_BG}
+text-color=${CRIT_FG}
+default-timeout=0
+EOF
+
+# Reload Mako
+pkill mako
+mako &
 
 # ----------------------------
 # Update Yazi theme
@@ -195,13 +251,37 @@ bg = "$BG"
 EOF
 
 # ----------------------------
-# Generate Tofi theme
+# Screenshot helper (sends notifications)
 # ----------------------------
-if [[ -f "$TOFI_TEMPLATE" ]]; then
-    mkdir -p "$(dirname "$TOFI_OUTPUT")"
-    sed -e "s/{color0}/${BG}/g" \
-        -e "s/{color4}/${COLORS[4]}/g" \
-        -e "s/{color7}/${FG}/g" \
-        -e "s/{color15}/${COLORS[15]}/g" \
-        "$TOFI_TEMPLATE" > "$TOFI_OUTPUT"
-fi
+cat > "$SCREENSHOT_SCRIPT" <<'EOS'
+#!/bin/bash
+DIR="$HOME/Pictures/Screenshots"
+mkdir -p "$DIR"
+FILE="$DIR/screenshot_$(date +%F_%T).png"
+
+case "$1" in
+    area)
+        grim -g "$(slurp)" "$FILE"
+        ;;
+    window)
+        RECT=$(hyprctl activewindow -j | jq -r '.at | "\(.x),\(.y) \(.width)x\(.height)"')
+        grim -g "$RECT" "$FILE"
+        ;;
+    screen)
+        grim "$FILE"
+        ;;
+    *)
+        grim "$FILE"
+        ;;
+esac
+
+notify-send "Screenshot saved" "$FILE"
+EOS
+chmod +x "$SCREENSHOT_SCRIPT"
+
+
+# ----------------------------
+# Finished
+# ----------------------------
+notify-send "Wallpaper & Theme" "✅ Waybar, Mako, and Yazi updated!"
+echo "✅ setwall.sh complete!"

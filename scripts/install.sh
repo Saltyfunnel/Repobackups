@@ -5,10 +5,22 @@ set -euo pipefail
 # ----------------------------
 # Helper functions
 # ----------------------------
-print_header()    { echo -e "\n--- \e[1m\e[34m$1\e[0m ---"; }
-print_success()   { echo -e "\e[32m$1\e[0m"; }
-print_warning()   { echo -e "\e[33mWarning: $1\e[0m" >&2; }
-print_error()     { echo -e "\e[31mError: $1\e[0m" >&2; exit 1; }
+print_header() {
+    echo -e "\n--- \e[1m\e[34m$1\e[0m ---"
+}
+
+print_success() {
+    echo -e "\e[32m$1\e[0m"
+}
+
+print_warning() {
+    echo -e "\e[33mWarning: $1\e[0m" >&2
+}
+
+print_error() {
+    echo -e "\e[31mError: $1\e[0m" >&2
+    exit 1
+}
 
 run_command() {
     local cmd="$1"
@@ -69,14 +81,11 @@ fi
 # ----------------------------
 print_header "Installing core packages"
 PACMAN_PACKAGES=(
-    # Core system + Hyprland essentials
-    hyprland waybar swww dunst grim slurp kitty nano wget jq oculante
+    hyprland waybar swww mako grim slurp kitty nano wget jq oculante btop steam
     sddm polkit polkit-kde-agent code curl bluez bluez-utils blueman python-pyqt6 python-pillow
     thunar gvfs gvfs-mtp gvfs-gphoto2 gvfs-smb udisks2 chafa nwg-look papirus-icon-theme
     thunar-archive-plugin thunar-volman tumbler ffmpegthumbnailer file-roller
     firefox yazi fastfetch starship mpv gnome-disk-utility pavucontrol
-
-    # GUI / Wayland / Fonts
     qt5-wayland qt6-wayland gtk3 gtk4 libgit2
     ttf-jetbrains-mono-nerd ttf-iosevka-nerd ttf-fira-code ttf-fira-mono ttf-cascadia-code-nerd
 )
@@ -107,7 +116,9 @@ fi
 print_header "Installing AUR packages"
 AUR_PACKAGES=(
     python-pywal16
-    tofi
+    localsend-bin
+    spotify
+    protonplus
 )
 for pkg in "${AUR_PACKAGES[@]}"; do
     if yay -Qs "^$pkg$" &>/dev/null; then
@@ -152,6 +163,13 @@ sudo -u "$USER_NAME" mkdir -p "$CONFIG_DIR/hypr"
 [[ -f "$HYPR_CONFIG_SRC" ]] && sudo -u "$USER_NAME" cp "$HYPR_CONFIG_SRC" "$CONFIG_DIR/hypr/hyprland.conf" && print_success "Copied hyprland.conf"
 [[ -f "$COLOR_FILE_SRC" ]] && sudo -u "$USER_NAME" cp "$COLOR_FILE_SRC" "$CONFIG_DIR/hypr/colors-hyprland.conf" && print_success "Copied colors-hyprland.conf"
 
+# Automatically update exec-once to Mako
+HYPR_CONF="$CONFIG_DIR/hypr/hyprland.conf"
+if [[ -f "$HYPR_CONF" ]]; then
+    sed -i 's/exec-once *= *dunst/exec-once = mako/' "$HYPR_CONF"
+    print_success "Hyprland exec-once updated to Mako"
+fi
+
 # ----------------------------
 # Copy Waybar config
 # ----------------------------
@@ -168,29 +186,8 @@ fi
 print_header "Copying Kitty config"
 KITTY_CONFIG_SRC="$REPO_ROOT/configs/kitty/kitty.conf"
 KITTY_CONFIG_DEST="$CONFIG_DIR/kitty/kitty.conf"
-
 sudo -u "$USER_NAME" mkdir -p "$CONFIG_DIR/kitty"
-if [[ -f "$KITTY_CONFIG_SRC" ]]; then
-    sudo -u "$USER_NAME" cp "$KITTY_CONFIG_SRC" "$KITTY_CONFIG_DEST"
-    print_success "Kitty config copied to $KITTY_CONFIG_DEST"
-else
-    print_warning "Kitty config not found at $KITTY_CONFIG_SRC"
-fi
-
-
-# ----------------------------
-# Copy Tofi config
-# ----------------------------
-print_header "Copying Tofi config"
-TOFI_CONFIG_SRC="$REPO_ROOT/configs/tofi"
-
-if [[ -d "$TOFI_CONFIG_SRC" ]]; then
-    sudo -u "$USER_NAME" mkdir -p "$CONFIG_DIR/tofi"
-    sudo -u "$USER_NAME" cp -rf "$TOFI_CONFIG_SRC/." "$CONFIG_DIR/tofi/"
-    print_success "Tofi config copied"
-else
-    print_warning "Tofi config folder not found at $TOFI_CONFIG_SRC"
-fi
+[[ -f "$KITTY_CONFIG_SRC" ]] && sudo -u "$USER_NAME" cp "$KITTY_CONFIG_SRC" "$KITTY_CONFIG_DEST" && print_success "Kitty config copied"
 
 # ----------------------------
 # Copy Yazi config
@@ -211,18 +208,32 @@ print_header "Copying user scripts"
 if [[ -d "$SCRIPTS_SRC" ]]; then
     sudo -u "$USER_NAME" mkdir -p "$CONFIG_DIR/scripts"
     sudo -u "$USER_NAME" cp -rf "$SCRIPTS_SRC/." "$CONFIG_DIR/scripts/"
-
-    # Make all .sh scripts executable
     sudo -u "$USER_NAME" chmod +x "$CONFIG_DIR/scripts/"*.sh
-
-    # Make wallpaper-picker.py executable
-    if [[ -f "$CONFIG_DIR/scripts/wallpaper-picker.py" ]]; then
-        sudo -u "$USER_NAME" chmod +x "$CONFIG_DIR/scripts/wallpaper-picker.py"
-        print_success "wallpaper-picker.py made executable"
-    fi
-
+    [[ -f "$CONFIG_DIR/scripts/wallpaper-picker.py" ]] && sudo -u "$USER_NAME" chmod +x "$CONFIG_DIR/scripts/wallpaper-picker.py" && print_success "wallpaper-picker.py made executable"
+    [[ -f "$CONFIG_DIR/scripts/app-picker.py" ]] && sudo -u "$USER_NAME" chmod +x "$CONFIG_DIR/scripts/app-picker.py" && print_success "app-picker.py made executable"
     print_success "User scripts copied"
 fi
+
+# ----------------------------
+# Copy Mako config
+# ----------------------------
+print_header "Copying Mako config"
+MAKO_SRC="$REPO_ROOT/configs/mako/config"
+MAKO_DEST="$CONFIG_DIR/mako/config"
+if [[ -f "$MAKO_SRC" ]]; then
+    sudo -u "$USER_NAME" mkdir -p "$CONFIG_DIR/mako"
+    sudo -u "$USER_NAME" cp "$MAKO_SRC" "$MAKO_DEST"
+    print_success "Mako config copied to $MAKO_DEST"
+else
+    print_warning "Mako config not found at $MAKO_SRC. Mako will use defaults."
+fi
+
+# ----------------------------
+# Create Screenshots folder
+# ----------------------------
+print_header "Creating Screenshots Folder"
+SCREENSHOT_DIR="$USER_HOME/Pictures/Screenshots"
+run_command "sudo -u $USER_NAME mkdir -p \"$SCREENSHOT_DIR\"" "Create ~/Pictures/Screenshots directory"
 
 # ----------------------------
 # Copy Fastfetch config
@@ -237,13 +248,7 @@ sudo -u "$USER_NAME" mkdir -p "$CONFIG_DIR/fastfetch"
 print_header "Copying Starship config"
 STARSHIP_SRC="$REPO_ROOT/configs/starship/starship.toml"
 STARSHIP_DEST="$CONFIG_DIR/starship.toml"
-
-if [[ -f "$STARSHIP_SRC" ]]; then
-    sudo -u "$USER_NAME" cp "$STARSHIP_SRC" "$STARSHIP_DEST"
-    print_success "Starship config copied to $STARSHIP_DEST"
-else
-    print_warning "Starship config not found at $STARSHIP_SRC"
-fi
+[[ -f "$STARSHIP_SRC" ]] && sudo -u "$USER_NAME" cp "$STARSHIP_SRC" "$STARSHIP_DEST" && print_success "Starship config copied to $STARSHIP_DEST"
 
 # ----------------------------
 # Copy Wallpapers
@@ -251,11 +256,7 @@ fi
 print_header "Copying Wallpapers"
 WALLPAPER_SRC="$REPO_ROOT/Pictures/Wallpapers"
 PICTURES_DEST="$USER_HOME/Pictures"
-if [[ -d "$WALLPAPER_SRC" ]]; then
-    sudo -u "$USER_NAME" mkdir -p "$PICTURES_DEST"
-    sudo -u "$USER_NAME" cp -rf "$WALLPAPER_SRC" "$PICTURES_DEST/"
-    print_success "Wallpapers copied"
-fi
+[[ -d "$WALLPAPER_SRC" ]] && sudo -u "$USER_NAME" mkdir -p "$PICTURES_DEST" && sudo -u "$USER_NAME" cp -rf "$WALLPAPER_SRC" "$PICTURES_DEST/" && print_success "Wallpapers copied"
 
 # ----------------------------
 # Enable SDDM
@@ -267,4 +268,4 @@ run_command "systemctl enable sddm.service" "Enable SDDM login manager"
 # Final message
 # ----------------------------
 print_success "✅ Installation complete!"
-echo -e "\nYou can now log out and select Hyprland session in SDDM."
+echo -e "\nYou can now log out and select the Hyprland session in SDDM."
